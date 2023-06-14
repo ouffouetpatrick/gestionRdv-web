@@ -1,0 +1,66 @@
+<div class="dialog-content-wrapper">
+
+    <mat-toolbar matDialogTitle class="accent m-0">
+        <mat-toolbar-row>
+            <span class="title dialog-title">Edition profil</span>
+        </mat-toolbar-row>
+    </mat-toolbar>
+
+    <div mat-dialog-content class="p-24 m-0" fusePerfectScrollbar>
+        <form name="form" [formGroup]="profilForm">
+            <div fxLayout="row" fxLayoutAlign="space-between start">
+
+                <mat-form-field appearance="outline" fxFlex class="mr-4">
+                    <mat-label>Libellé profil</mat-label>
+                    <input matInput formControlName="libelle" required>
+                    <mat-icon matSuffix class="secondary-text">wrap_text</mat-icon>
+                    <mat-error>Ce champ est obligatoire</mat-error>               
+                </mat-form-field>
+
+            </div>
+            
+            <div fxLayout="row" fxLayoutAlign="space-between start">
+                <mat-form-field appearance="outline" fxFlex>
+                    <mat-label>Selectionnez les modules</mat-label>
+                    <mat-select placeholder="Selectionner les modules" [compareWith]="comparer"
+                    [formControl]="modules" multiple required>
+                    <mat-select-trigger>
+                        {{(modules.value && modules.value[0]) ? modules.value[0].libelle : ''}}
+                        <span *ngIf="modules.value?.length > 1" class="example-additional-selection">
+                        (+{{modules.value.length - 1}} {{modules.value?.length === 2 ? 'autre' : 'autres'}})
+                        </span>
+                    </mat-select-trigger>
+                        <mat-option *ngFor="let module of listeModule" [value]="module">{{module.libelle}}</mat-option>
+                    </mat-select>
+                    <mat-error>Ce champ est obligatoire</mat-error> 
+                </mat-form-field>
+            </div>
+
+            <div fxLayout="column" fxLayoutAlign="space-around strech" *ngFor="let module of modules.value">
+                <div fxLayoutAlign="center center">
+                    <div class="import-box info-box general" fxLayout="column">
+                        <header class="red-500">
+                            {{ module.libelle }}
+                        </header>
+
+                        <div class="content" *ngIf="module.moduleDroit.length>0">
+                            <div class="info-line">
+                                <mat-slide-toggle [(ngModel)]="moduleDroit.droit.isCheck" [ngModelOptions]="{standalone: true}" *ngFor="let moduleDroit of module.moduleDroit" class="mr-8">{{moduleDroit.droit.libelle}}</mat-slide-toggle>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+                
+            </div>
+
+        </form>
+    </div>
+
+    <div mat-dialog-actions class="m-0 p-16" fxLayout="row" fxLayoutAlign="end center">
+        <button mat-button mat-dialog-close cdkFocusInitial class="save-button mat-raised-button">Fermer</button>
+        <button mat-button class="save-button teal-700" [disabled]="profilForm.invalid || modules.invalid" (click)="save()">{{data.profil ? "Modifier" : "Ajouter"}}</button>
+    </div>
+
+</div>

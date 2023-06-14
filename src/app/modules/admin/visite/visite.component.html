@@ -1,0 +1,621 @@
+<div class="sm:absolute sm:inset-0 flex flex-col flex-auto min-w-0 sm:overflow-hidden bg-card dark:bg-transparent">
+
+  <!-- Header -->
+  <div class="relative flex flex-col lg:flex-row flex-0 items-start justify-between py-6 px-6 lg:items-center md:px-8 border-b">
+    <!-- Title -->
+    <div class="text-4xl text-primary font-extrabold tracking-tight">Gestion des visites</div>
+    <!-- Actions -->
+    <div class="flex gap-1 shrink-0 lg:items-center sm:mt-0 button-header-parent">
+      <!-- Search -->
+      <div>
+      <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript fuse-mat-rounded lg:min-w-64 search-header">
+        <mat-icon class="icon-size-5" matPrefix [svgIcon]="'heroicons_solid:search'"></mat-icon>
+        <input matInput (keyup)="applyFilter($event)" [autocomplete]="'off'" [placeholder]="'Rechercher'">
+      </mat-form-field>
+      </div>
+      <!-- Add product button -->
+      <div class="flex">
+      <button 
+        (click)="getVisiteAll()"
+        title="Actualiser" 
+        mat-flat-button 
+        [color]="'accent'"
+        class="mr-1">
+        <mat-icon [svgIcon]="'heroicons_outline:refresh'"></mat-icon>
+        <span class="ml-2 mr-1">Actualiser</span>
+      </button>
+      <button *ngIf="user.utilisateurProfil[0].profil?.libelle == 'Client'"  mat-flat-button
+        [color]="'primary'" (click)="openDialogVisiteForm(null)">
+        <mat-icon [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+        <span class="ml-2 mr-1">Ajouter</span>
+      </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Main -->
+
+  <div class="flex flex-auto overflow-hidden">
+    <div class="flex flex-col flex-auto sm:mb-0 overflow-hidden sm:overflow-y-auto rounded-lg">
+
+      <mat-tab-group (selectedTabChange)="onTabsChange($event)"  class="sm:px-2 mt-2" [animationDuration]="'0'">
+
+        <mat-tab>
+          <ng-template mat-tab-label>
+            En attente
+            <span [matBadge]="nbrAttente" class="ml-5" matBadgeOverlap="large"></span>
+          </ng-template>
+          <div class="flex flex-col flex-auto sm:mb-18 overflow-hidden sm:overflow-y-auto">
+            <table *ngIf="dataSourceAttente.data.length>0" mat-table  [dataSource]="dataSourceAttente" matSort class="w-full mb-16">
+              
+              <ng-container matColumnDef="dateRdv">
+                <th class="text-white" mat-header-cell *matHeaderCellDef > 
+                Date du RDV
+                </th>
+                <td mat-cell *matCellDef="let element">{{element?.date | date:'dd/MM/yyyy'}}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="heure">
+                <th class="hidden sm:table-cell text-white" mat-header-cell *matHeaderCellDef> 
+                  Heure
+                </th>
+                <td class="hidden sm:table-cell" mat-cell *matCellDef="let element">{{element?.date | date:'HH:mm'}}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="objet">
+                <th class="hidden sm:table-cell text-white" mat-header-cell *matHeaderCellDef mat-sort-header> 
+                  Objet  
+                </th>
+                <td class="hidden sm:table-cell" mat-cell *matCellDef="let element">{{element?.objet}}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="datecreation">
+                <th class="text-white hidden md:table-cell" mat-header-cell *matHeaderCellDef mat-sort-header> 
+                  Date création 
+                </th>
+                <td class="hidden md:table-cell" mat-cell *matCellDef="let element">{{element.dateCreation | date:'dd/MM/yyyy'}} </td>
+              </ng-container>
+
+              <ng-container matColumnDef="statutTraitement">
+                <th class="text-white" mat-header-cell *matHeaderCellDef mat-sort-header> 
+                  <div *ngIf="user.utilisateurProfil[0].profil?.id == 1">Attribution</div>
+                  <div *ngIf="user.utilisateurProfil[0].profil?.id == 3">Traitement</div>
+                </th>
+                <td mat-cell *matCellDef="let element"> 
+                  <span 
+                    *ngIf="user.utilisateurProfil[0].profil?.id == 1"
+                    class="inline-flex items-center font-bold text-xs px-2.5 py-0.5 rounded-full tracking-wide uppercase"
+                    [ngClass]="{
+                      'bg-green-200 text-green-800 dark:bg-green-600 dark:text-green-50': element?.employe?.nom != null,
+                      'bg-red-200 text-red-800 dark:bg-red-600 dark:text-red-50': element?.employe?.nom == null
+                    }">
+                    {{ element?.employe?.nom == null ? 'Non Attribuée' : 'attribuée' }}
+                  </span>
+                  <span 
+                    *ngIf="user.utilisateurProfil[0].profil?.id == 3"
+                    class="inline-flex items-center font-bold text-xs px-2.5 py-0.5 rounded-full tracking-wide uppercase"
+                    [ngClass]="{
+                      'bg-green-200 text-green-800 dark:bg-green-600 dark:text-green-50': element?.employe?.nom != null,
+                      'bg-red-200 text-red-800 dark:bg-red-600 dark:text-red-50': element?.employe?.nom == null
+                    }">
+                    {{ element?.employe?.nom == null ? 'Pas en traitement' : 'En traitement' }}
+                  </span> 
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="demandeur">
+                <th class="text-white" mat-header-cell *matHeaderCellDef mat-sort-header>
+                  <span *ngIf="user.utilisateurProfil[0].profil?.id == 1 || user.utilisateurProfil[0].profil?.id == 2">
+                    Demandeur
+                  </span>
+                </th>
+                <td mat-cell *matCellDef="let element">
+                    <span *ngIf="user.utilisateurProfil[0].profil?.id == 1 || user.utilisateurProfil[0].profil?.id == 2">
+                      {{ element?.utilisateur?.nom}} {{ element?.utilisateur?.prenom}}
+                    </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="employe">
+                <th class="text-white" mat-header-cell *matHeaderCellDef mat-sort-header>
+                  <span *ngIf="user.utilisateurProfil[0].profil?.id == 1">
+                    Dirigeant
+                  </span>
+                </th>
+                <td mat-cell *matCellDef="let element">
+                    <span *ngIf="user.utilisateurProfil[0].profil?.id == 1">
+                      {{ element?.employe?.nom != null ? element?.employe?.nom : 'Aucun' }}
+                      {{ element?.employe?.nom != null ? element?.employe?.prenom : '' }}
+                    </span>
+                </td>
+              </ng-container>
+
+              
+              <ng-container matColumnDef="action">
+                <th class="text-white" mat-header-cell *matHeaderCellDef> 
+                  Action 
+                </th>
+                <td mat-cell *matCellDef="let element">
+                  <div class="flex items-center gap-2">
+
+                    <button *ngIf="user.utilisateurProfil[0].profil?.id == 3"
+                      [disabled]="element?.employe?.nom != null"
+                      class="min-w-10 min-h-7 h-7 px-2 leading-6 bg-primary" 
+                      title="Modifier"
+                      (click)="openDialogVisiteForm(element)" 
+                      mat-stroked-button>
+                      <mat-icon class="icon-size-5 text-white" [svgIcon]="'iconsmind:folder_edit'"></mat-icon>
+                    </button>
+
+                    <button *ngIf="user.utilisateurProfil[0].profil?.id == 1"
+                      class="min-w-10 min-h-7 h-7 px-2 leading-6 bg-primary" 
+                      mat-stroked-button
+                      (click)="openDialogAttributeForm(element)" 
+                      title="Attribuer Visite">
+                      <mat-icon class="icon-size-5 text-white" [svgIcon]="'post_add'"></mat-icon>
+                    </button>
+
+                    <button *ngIf="user.utilisateurProfil[0].profil?.id == 2"
+                      class="min-w-10 min-h-7 h-7 px-2 leading-6 bg-green-600" title="Valider" mat-stroked-button
+                      (click)="validerVisite(element)">
+                      <mat-icon class="icon-size-5 text-white" [svgIcon]="'heroicons_outline:check'"></mat-icon>
+                    </button>
+
+                    <button *ngIf="user.utilisateurProfil[0].profil?.id == 2"
+                      class="min-w-10 min-h-7 h-7 px-2 leading-6 bg-red-600" title="Rejeter" mat-stroked-button
+                      (click)="openDialogRejeterForm(element)">
+                      <mat-icon class="icon-size-5 text-white" [svgIcon]="'heroicons_solid:x'"></mat-icon>
+                    </button>
+                  </div>
+                </td>
+              </ng-container>
+
+              <tr class="z-10 sticky top-0 gap-4 py-4 px-6 md:px-8 text-md font-semibold text-white bg-primary dark:bg-black dark:bg-opacity-5"
+                mat-header-row *matHeaderRowDef="displayedColumnsAttente"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumnsAttente;"></tr>
+            </table>
+            
+            <div class="flex flex-col justify-center" *ngIf="dataSourceAttente.data.length == 0">
+              <div class="flex justify-center">
+                <div class="w-55 h-40 mt-0 md:mt-9 sm:mt-18 agenga"> 
+                  <img src="assets/images/agenda2.png" alt="Pas de rendez-vous enregistré">
+                </div>
+              </div>
+              <div class="flex justify-center">
+                <span 
+                  class="inline-flex items-center font-bold text-xs px-2.5 py-0.5 rounded-full tracking-wide uppercase
+                  bg-red-200 text-red-800 dark:bg-red-600 dark:text-red-50">
+                  Pas de rendez-vous en attente
+                </span>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+
+        <mat-tab>
+          <ng-template mat-tab-label>
+            Validée
+            <span [matBadge]="nbrValidee" class="ml-5 colorOrange" matBadgeOverlap="large"></span>
+          </ng-template>
+          <div class="flex flex-col flex-auto sm:mb-18 overflow-hidden sm:overflow-y-auto">
+            <table *ngIf="dataSourceValidee.data.length>0" mat-table [dataSource]="dataSourceValidee" matSort class="w-full mb-16">
+              
+              <ng-container matColumnDef="dateRdv">
+                <th class="text-white" mat-header-cell *matHeaderCellDef mat-sort-header> Date du RDV </th>
+                <td mat-cell *matCellDef="let element">{{element?.date | date:'dd/MM/yyyy'}}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="heure">
+                <th class="hidden sm:table-cell text-white" mat-header-cell *matHeaderCellDef mat-sort-header> Heure </th>
+                <td class="hidden sm:table-cell" mat-cell *matCellDef="let element">{{element?.date | date:'HH:mm'}}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="objet">
+                <th class="text-white" mat-header-cell *matHeaderCellDef mat-sort-header> Objet </th>
+                <td mat-cell *matCellDef="let element">{{element?.objet}}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="demandeur">
+                <th class="text-white" mat-header-cell *matHeaderCellDef mat-sort-header>
+                  <span *ngIf="user.utilisateurProfil[0].profil?.id == 1 || user.utilisateurProfil[0].profil?.id == 2">
+                    Demandeur
+                  </span>
+                </th>
+                <td mat-cell *matCellDef="let element">
+                    <span *ngIf="user.utilisateurProfil[0].profil?.id == 1 || user.utilisateurProfil[0].profil?.id == 2">
+                      {{ element?.utilisateur?.nom}} {{ element?.utilisateur?.prenom}}
+                    </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="employe">
+                <th class="text-white" mat-header-cell *matHeaderCellDef mat-sort-header> 
+                  <span *ngIf="user.utilisateurProfil[0].profil?.id == 1">Dirigeant</span>  
+                </th>
+                <td mat-cell *matCellDef="let element">
+                  <span *ngIf="user.utilisateurProfil[0].profil?.id == 1">{{element?.employe?.nom}}</span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="datecreation">
+                <th class="hidden md:table-cell text-white" mat-header-cell *matHeaderCellDef mat-sort-header> Date création </th>
+                <td class="hidden md:table-cell" mat-cell *matCellDef="let element">{{element.dateCreation | date:'dd/MM/yyyy'}}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="action">
+                <th class="text-white" mat-header-cell *matHeaderCellDef> 
+                  <span *ngIf="user.utilisateurProfil[0].profil?.id == 2 || user.utilisateurProfil[0].profil?.id == 3">Action</span>  
+                </th>
+                <td mat-cell *matCellDef="let element">
+                  <div *ngIf="user.utilisateurProfil[0].profil?.id == 2 || user.utilisateurProfil[0].profil?.id == 3" class="flex items-center gap-2">
+
+                    <button *ngIf="user.utilisateurProfil[0].profil?.id == 2"
+                      [disabled]="element?.date > currentDate"
+                      class="min-w-10 min-h-7 h-7 px-2 leading-6 bg-green-600" 
+                      (click)="effectuer(element)"
+                      title="Effectuer" mat-stroked-button>
+                      <mat-icon class="icon-size-5 text-white" [svgIcon]="'done_all'"></mat-icon>
+                    </button>
+
+                    <button *ngIf="user.utilisateurProfil[0].profil?.id == 3"
+                      class="min-w-10 min-h-7 h-7 px-2 leading-6 bg-green-600" 
+                      (click)="confirmerVisite(element)"
+                      title="Confirmer" mat-stroked-button>
+                      <mat-icon class="icon-size-5 text-white" [svgIcon]="'done_all'"></mat-icon>
+                    </button>
+
+                  </div>
+                </td>
+              </ng-container>
+
+              <tr class="z-10 sticky top-0 gap-4 py-4 px-6 md:px-8 text-md font-semibold text-white bg-primary dark:bg-black dark:bg-opacity-5"
+                mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            </table>
+
+            <div class="flex flex-col justify-center" *ngIf="dataSourceValidee.data.length == 0">
+              <div class="flex justify-center">
+                <div class="w-55 h-40 mt-0 md:mt-9 sm:mt-18 agenga"> 
+                  <img src="assets/images/agenda2.png" alt="Pas de rendez-vous enregistré">
+                </div>
+              </div>
+              <div class="flex justify-center">
+                <span 
+                  class="inline-flex items-center font-bold text-xs px-2.5 py-0.5 rounded-full tracking-wide uppercase
+                  bg-red-200 text-red-800 dark:bg-red-600 dark:text-red-50">
+                  Pas de rendez-vous validté
+                </span>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+
+        <mat-tab>
+          <ng-template mat-tab-label>
+            Confirmée
+            <span [matBadge]="nbrConfirmee" class="ml-5 colorGreen" matBadgeOverlap="large"></span>
+          </ng-template>
+          <div class="flex flex-col flex-auto sm:mb-18 overflow-hidden sm:overflow-y-auto">
+            <table *ngIf="dataSourceConfirmee.data.length>0" mat-table [dataSource]="dataSourceConfirmee" matSort
+              class="w-full mb-16">
+              <ng-container matColumnDef="dateRdv">
+                <th class="text-white" mat-header-cell *matHeaderCellDef mat-sort-header> Date du RDV </th>
+                <td mat-cell *matCellDef="let element">{{element?.date | date:'dd/MM/yyyy'}}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="heure">
+                <th class="text-white" mat-header-cell *matHeaderCellDef mat-sort-header> Heure </th>
+                <td mat-cell *matCellDef="let element">{{element?.date | date:'HH:mm'}}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="objet">
+                <th class="hidden sm:table-cell text-white" mat-header-cell *matHeaderCellDef mat-sort-header> Objet </th>
+                <td class="hidden sm:table-cell" mat-cell *matCellDef="let element">{{element?.objet}}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="demandeur">
+                <th class="text-white" mat-header-cell *matHeaderCellDef mat-sort-header>
+                  <span *ngIf="user.utilisateurProfil[0].profil?.id == 1 || user.utilisateurProfil[0].profil?.id == 2">
+                    Demandeur
+                  </span>
+                </th>
+                <td mat-cell *matCellDef="let element">
+                    <span *ngIf="user.utilisateurProfil[0].profil?.id == 1 || user.utilisateurProfil[0].profil?.id == 2">
+                      {{ element?.utilisateur?.nom}} {{ element?.utilisateur?.prenom}}
+                    </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="employe">
+                <th class="text-white" mat-header-cell *matHeaderCellDef mat-sort-header> 
+                  <span *ngIf="user.utilisateurProfil[0].profil?.id == 1 || user.utilisateurProfil[0].profil?.id == 3">Dirigeant</span>  
+                </th>
+                <td mat-cell *matCellDef="let element">
+                  <span *ngIf="user.utilisateurProfil[0].profil?.id == 1 || user.utilisateurProfil[0].profil?.id == 3">{{element?.employe?.nom}}</span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="datecreation">
+                <th class="hidden md:table-cell text-white" mat-header-cell *matHeaderCellDef mat-sort-header> Date création </th>
+                <td class="hidden md:table-cell" mat-cell *matCellDef="let element">{{element.dateCreation | date:'dd/MM/yyyy'}}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="action">
+                <th class="text-white" mat-header-cell *matHeaderCellDef> 
+                  <span *ngIf="user.utilisateurProfil[0].profil?.id == 2">Action</span>  
+                </th>
+                <td mat-cell *matCellDef="let element">
+                  <div *ngIf="user.utilisateurProfil[0].profil?.id == 2" class="flex items-center gap-2">
+                    
+                    <button [disabled]="user.utilisateurProfil[0].profil?.id == 2"
+                      [disabled]="element?.date > currentDate"
+                      class="min-w-10 min-h-7 h-7 px-2 leading-6 bg-green-600" 
+                      (click)="effectuer(element)"
+                      title="Effectuer" mat-stroked-button>
+                      <mat-icon class="icon-size-5 text-white" [svgIcon]="'done_all'"></mat-icon>
+                    </button>
+
+                  </div>
+                </td>
+              </ng-container>
+
+              <tr class="z-10 sticky top-0 gap-4 py-4 px-6 md:px-8 text-md font-semibold text-white bg-primary dark:bg-black dark:bg-opacity-5"
+                mat-header-row *matHeaderRowDef="displayedColumnsConfirmee"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumnsConfirmee;"></tr>
+            </table>
+
+            <div class="flex flex-col justify-center" *ngIf="dataSourceConfirmee.data.length == 0">
+              <div class="flex justify-center">
+                <div class="w-55 h-40 mt-0 md:mt-9 sm:mt-18 agenga"> 
+                  <img src="assets/images/agenda2.png" alt="Pas de rendez-vous enregistré">
+                </div>
+              </div>
+              <div class="flex justify-center">
+                <span 
+                  class="inline-flex items-center font-bold text-xs px-2.5 py-0.5 rounded-full tracking-wide uppercase
+                  bg-red-200 text-red-800 dark:bg-red-600 dark:text-red-50">
+                  Pas de rendez-vous confirmé
+                </span>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+
+        <mat-tab>
+          <ng-template mat-tab-label>
+            Rejetée
+            <span [matBadge]="nbrRejetee" class="ml-5" matBadgeColor="warn" matBadgeOverlap="large"></span>
+          </ng-template>
+          <div class="flex flex-col flex-auto sm:mb-18 overflow-hidden sm:overflow-y-auto">
+            <table *ngIf="dataSourceRejetee.data.length>0" mat-table  [dataSource]="dataSourceRejetee" matSort class="w-full mb-16">
+
+              <ng-container matColumnDef="dateRdv">
+                <th class="text-white" mat-header-cell *matHeaderCellDef mat-sort-header> Date du RDV </th>
+                <td mat-cell *matCellDef="let element">{{element?.date | date:'dd/MM/yyyy'}}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="heure">
+                <th class="hidden sm:table-cell text-white" mat-header-cell *matHeaderCellDef mat-sort-header> Heure </th>
+                <td class="hidden sm:table-cell" mat-cell *matCellDef="let element">{{element?.date | date:'HH:mm'}}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="objet">
+                <th class="hidden sm:table-cell text-white" mat-header-cell *matHeaderCellDef mat-sort-header> Objet </th>
+                <td class="hidden sm:table-cell" mat-cell *matCellDef="let element">{{element?.objet}}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="demandeur">
+                <th class="text-white" mat-header-cell *matHeaderCellDef mat-sort-header>
+                  <span *ngIf="user.utilisateurProfil[0].profil?.id == 1 || user.utilisateurProfil[0].profil?.id == 2">
+                    Demandeur
+                  </span>
+                </th>
+                <td mat-cell *matCellDef="let element">
+                    <span *ngIf="user.utilisateurProfil[0].profil?.id == 1 || user.utilisateurProfil[0].profil?.id == 2">
+                      {{ element?.utilisateur?.nom}} {{ element?.utilisateur?.prenom}}
+                    </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="employe">
+                <th class="text-white" mat-header-cell *matHeaderCellDef mat-sort-header> 
+                  <span *ngIf="user.utilisateurProfil[0].profil?.id == 1">Dirigeant</span>  
+                </th>
+                <td mat-cell *matCellDef="let element">
+                  <span *ngIf="user.utilisateurProfil[0].profil?.id == 1">{{element?.employe?.nom}}</span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="datecreation">
+                <th class="hidden md:table-cell text-white" mat-header-cell *matHeaderCellDef mat-sort-header> Date création </th>
+                <td class="hidden md:table-cell" mat-cell *matCellDef="let element">{{element.dateCreation | date:'dd/MM/yyyy'}}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="motif">
+                <th class="text-white" mat-header-cell *matHeaderCellDef mat-sort-header> Motif </th>
+                <td mat-cell *matCellDef="let element">{{element?.motif?.libelle}}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="statutRejet">
+                <th class="text-white" mat-header-cell *matHeaderCellDef mat-sort-header> 
+                  <span *ngIf="user.utilisateurProfil[0].profil?.id == 1">Auteur</span>
+                </th>
+                <td mat-cell *matCellDef="let element"> 
+                  <span *ngIf="user.utilisateurProfil[0].profil?.id == 1 && element?.empty1 === 'employe'">Dirigeant</span>
+                  <span *ngIf="user.utilisateurProfil[0].profil?.id == 1 && element?.empty1 === 'admin'">Admin</span> 
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="action">
+                
+                <th class="text-white" mat-header-cell *matHeaderCellDef> 
+                  <span *ngIf="user.utilisateurProfil[0].profil?.id == 1">Action</span>  
+                </th>
+                <td mat-cell *matCellDef="let element">
+                  <div *ngIf="user.utilisateurProfil[0].profil?.id == 1" class="flex items-center gap-2">
+
+                    <button 
+                      *ngIf="user.utilisateurProfil[0].profil?.id == 1"
+                      class="min-w-10 min-h-7 h-7 px-2 leading-6 bg-primary" mat-stroked-button
+                      (click)="openDialogAttributeForm(element)" title="Reattribuer">
+                      <mat-icon class="icon-size-5 text-white" [svgIcon]="'post_add'"></mat-icon>
+                    </button>
+
+                    <!--Ces boutons rejeté et openDialogue sont utilisés dans un autre cas de figure où c'est la visite rejetée
+                    par l'admin qui visible par le client-->
+                    <!-- <button 
+                      *ngIf="user.utilisateurProfil[0].profil?.id == 1"
+                      [disabled]="element?.empty1 === 'admin'"
+                      class="min-w-10 min-h-7 h-7 px-2 leading-6 bg-primary" mat-stroked-button
+                      (click)="openDialogAttributeForm(element)" title="Reattribuer">
+                      <mat-icon class="icon-size-5 text-white" [svgIcon]="'post_add'"></mat-icon>
+                    </button>
+                    <button 
+                      *ngIf="user.utilisateurProfil[0].profil?.id == 1" 
+                      [disabled]="element?.empty1 === 'admin'"
+                      class="min-w-10 min-h-7 h-7 px-2 leading-6 bg-red-600" title="Rejeter" mat-stroked-button
+                      (click)="openDialogRejeterForm(element)">
+                      <mat-icon class="icon-size-5 text-white" [svgIcon]="'heroicons_solid:x'"></mat-icon>
+                    </button> -->
+                    
+                  </div>
+                </td>
+              </ng-container>
+
+              <tr class="z-10 sticky top-0 gap-4 py-4 px-6 md:px-8 text-md font-semibold text-white bg-primary dark:bg-black dark:bg-opacity-5"
+                mat-header-row *matHeaderRowDef="displayedColumnsRejeter"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumnsRejeter;"></tr>
+            </table>
+            <div class="flex flex-col justify-center" *ngIf="dataSourceRejetee.data.length == 0">
+              <div class="flex justify-center">
+                <div class="w-55 h-40 mt-0 md:mt-9 sm:mt-18 agenga"> 
+                  <img src="assets/images/agenda2.png" alt="Pas de rendez-vous enregistré">
+                </div>
+              </div>
+              <div class="flex justify-center">
+                <span 
+                  class="inline-flex items-center font-bold text-xs px-2.5 py-0.5 rounded-full tracking-wide uppercase
+                  bg-red-200 text-red-800 dark:bg-red-600 dark:text-red-50">
+                  Pas de rendez-vous rejeté
+                </span>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+
+        <mat-tab>
+          <ng-template mat-tab-label>
+            Effectuée
+            <span [matBadge]="nbrEffectuee" class="ml-5 colorGreen" matBadgeOverlap="large"></span>
+          </ng-template>
+          <div class="flex flex-col flex-auto sm:mb-18 overflow-hidden sm:overflow-y-auto">
+            <table *ngIf="dataSourceEffectuee.data.length>0" mat-table [dataSource]="dataSourceEffectuee" matSort
+              class="w-full mb-16">
+              <ng-container matColumnDef="dateRdv">
+                <th class="text-white" mat-header-cell *matHeaderCellDef mat-sort-header> Date du RDV </th>
+                <td mat-cell *matCellDef="let element">{{element?.date | date:'dd/MM/yyyy'}}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="heure">
+                <th class="text-white" mat-header-cell *matHeaderCellDef mat-sort-header> Heure </th>
+                <td mat-cell *matCellDef="let element">{{element?.date | date:'HH:mm'}}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="objet">
+                <th class="hidden sm:table-cell text-white" mat-header-cell *matHeaderCellDef mat-sort-header> Objet </th>
+                <td class="hidden sm:table-cell" mat-cell *matCellDef="let element">{{element?.objet}}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="demandeur">
+                <th class="text-white" mat-header-cell *matHeaderCellDef mat-sort-header>
+                  <span *ngIf="user.utilisateurProfil[0].profil?.id == 1 || user.utilisateurProfil[0].profil?.id == 2">
+                    Demandeur
+                  </span>
+                </th>
+                <td mat-cell *matCellDef="let element">
+                    <span *ngIf="user.utilisateurProfil[0].profil?.id == 1 || user.utilisateurProfil[0].profil?.id == 2">
+                      {{ element?.utilisateur?.nom}} {{ element?.utilisateur?.prenom}}
+                    </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="employe">
+                <th class="text-white" mat-header-cell *matHeaderCellDef mat-sort-header> 
+                  <span *ngIf="user.utilisateurProfil[0].profil?.id == 1">Dirigeant</span>  
+                </th>
+                <td mat-cell *matCellDef="let element">
+                  <span *ngIf="user.utilisateurProfil[0].profil?.id == 1">{{element?.employe?.nom}}</span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="datecreation">
+                <th class="hidden md:table-cell text-white" mat-header-cell *matHeaderCellDef mat-sort-header> Date création </th>
+                <td class="hidden md:table-cell" mat-cell *matCellDef="let element">{{element.dateCreation | date:'dd/MM/yyyy'}}</td>
+              </ng-container>
+
+              <tr class="z-10 sticky top-0 gap-4 py-4 px-6 md:px-8 text-md font-semibold text-white bg-primary dark:bg-black dark:bg-opacity-5"
+                mat-header-row *matHeaderRowDef="displayedColumnsEffectuer"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumnsEffectuer;"></tr>
+            </table>
+            <div class="flex flex-col justify-center" *ngIf="dataSourceEffectuee.data.length == 0">
+              <div class="flex justify-center">
+                <div class="w-55 h-40 mt-0 md:mt-9 sm:mt-18 agenga"> 
+                  <img src="assets/images/agenda2.png" alt="Pas de rendez-vous enregistré">
+                </div>
+              </div>
+              <div class="flex justify-center">
+                <span 
+                  class="inline-flex items-center font-bold text-xs px-2.5 py-0.5 rounded-full tracking-wide uppercase
+                  bg-red-200 text-red-800 dark:bg-red-600 dark:text-red-50">
+                  Pas de rendez-vous enregistré
+                </span>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+
+      </mat-tab-group>
+
+      <div *ngIf="showPagination == 0">
+        <mat-paginator
+          class="sm:absolute sm:inset-x-0 sm:bottom-0 border-b sm:border-t sm:border-b-0 z-10 bg-gray-50 dark:bg-transparent pagination"
+          [ngClass]="{'pointer-events-none': isLoading}" #paginationEnAttente [pageSize]="page.pageSize"
+          [pageSizeOptions]="page.pageSizeOptions" showFirstLastButtons aria-label="Select page of periodic elements">
+        </mat-paginator>
+      </div>
+
+      <div *ngIf="showPagination == 1">
+        <mat-paginator
+          class="sm:absolute sm:inset-x-0 sm:bottom-0 border-b sm:border-t sm:border-b-0 z-10 bg-gray-50 dark:bg-transparent pagination"
+          [ngClass]="{'pointer-events-none': isLoading}" #paginationValidee [pageSize]="page.pageSize"
+          [pageSizeOptions]="page.pageSizeOptions" showFirstLastButtons aria-label="Select page of periodic elements">
+        </mat-paginator>
+      </div>
+
+      <div *ngIf="showPagination == 2">
+        <mat-paginator
+          class="sm:absolute sm:inset-x-0 sm:bottom-0 border-b sm:border-t sm:border-b-0 z-10 bg-gray-50 dark:bg-transparent pagination"
+          [ngClass]="{'pointer-events-none': isLoading}" #paginationConfirmee [pageSize]="page.pageSize"
+          [pageSizeOptions]="page.pageSizeOptions" showFirstLastButtons aria-label="Select page of periodic elements">
+        </mat-paginator>
+      </div>
+
+      <div *ngIf="showPagination == 3">
+        <mat-paginator
+          class="sm:absolute sm:inset-x-0 sm:bottom-0 border-b sm:border-t sm:border-b-0 z-10 bg-gray-50 dark:bg-transparent pagination"
+          [ngClass]="{'pointer-events-none': isLoading}" #paginationRejetee [pageSize]="page.pageSize"
+          [pageSizeOptions]="page.pageSizeOptions" showFirstLastButtons aria-label="Select page of periodic elements">
+        </mat-paginator>
+      </div>
+
+      <div *ngIf="showPagination == 4">
+        <mat-paginator
+          class="sm:absolute sm:inset-x-0 sm:bottom-0 border-b sm:border-t sm:border-b-0 z-10 bg-gray-50 dark:bg-transparent pagination"
+          [ngClass]="{'pointer-events-none': isLoading}" #paginationEffectuee [pageSize]="page.pageSize"
+          [pageSizeOptions]="page.pageSizeOptions" showFirstLastButtons aria-label="Select page of periodic elements">
+        </mat-paginator>
+      </div>
+
+    </div>
+  </div>
+</div>

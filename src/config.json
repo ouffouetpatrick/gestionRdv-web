@@ -1,0 +1,19 @@
+{
+    "port": 7361,
+    "limit":{
+        "postData":"50mb",
+        "urlEncoded":"50mb"
+    },
+    "db":{
+        "type": "mysql",
+        "host": "141.94.175.40",
+        "port": 3306,
+        "username": "sitc",
+        "password": "Root@dmin2021*",
+        "database": "ortissai_db",
+        "dropSchema":false,         
+        "autoLoadEntities": true,
+        "synchronize": true,
+        "logging": false
+    }
+}

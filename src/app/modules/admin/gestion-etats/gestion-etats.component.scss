@@ -1,0 +1,22 @@
+#etat-tab .mat-tab-group .mat-tab-body-content {
+    padding: 0 !important;
+}
+
+.mat-tab-group
+    .mat-tab-header
+    .mat-tab-label-container
+    .mat-tab-list
+    .mat-tab-labels
+    .mat-tab-label.mat-tab-label-active {
+    color: white !important;
+    background-color: #1565c0 !important;
+}
+
+
+.mat-form-field-flex{
+    min-height: 40px !important;
+}
+
+.optionSemaine{
+    width: 90px;
+}

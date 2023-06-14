@@ -1,0 +1,79 @@
+table {
+    width: 100%;
+}
+
+mat-tab {
+    margin-top: 5rem;
+}
+
+.mat-tab-group
+    .mat-tab-header
+    .mat-tab-label-container
+    .mat-tab-list
+    .mat-tab-labels
+    .mat-tab-label.mat-tab-label-active {
+    color: white !important;
+    background-color: #1565c0 !important;
+}
+
+$badge-color1: orange !important;
+$badge-color2: green !important;
+
+.colorGreen > .mat-badge-content {
+    background-color: $badge-color2;
+}
+
+.colorOrange > .mat-badge-content {
+    background-color: $badge-color1;
+}
+
+.spanNotification{
+    border: 2px solid;
+    border-style: none;
+    border-radius: 30px;
+    padding: 2px 10px 2px 10px;
+    color: white;
+    font-style: italic;
+    background-color: #dc2626;
+}
+
+.mat-form-field-appearance-legacy 
+.mat-form-field-underline{
+    background-color: white !important;
+}
+
+.agenga img{
+    width: 100%;
+    height: 100%;
+}
+
+
+// Responsive
+// Pour tous les appareils équipés d'écrans et dont la taille est inférieure à 560px
+@media screen and (max-width: 560px){
+    .search-header{
+        width: 130px;
+    }
+
+    .button-header-parent{
+        display: flex;
+        flex-direction: column;
+        justify-content: start;
+    }
+
+    // .agenga{
+    //     margin-top: 50px;
+    // }
+
+}
+
+@media screen and (max-width: 600px){
+    
+    .pagination{
+        position: absolute;
+        bottom: 0px;
+        right: 0px;
+        left: 0px;
+    }
+
+}

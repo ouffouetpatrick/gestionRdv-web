@@ -1,0 +1,19 @@
+
+app-droit{
+
+    .inventory-grid {
+        grid-template-columns: auto 48px 40px;
+
+        @screen sm {
+            grid-template-columns: auto 48px 40px;
+        }
+
+        @screen md {
+            grid-template-columns: auto 240px 48px;
+        }
+
+        @screen lg {
+            grid-template-columns: auto 240px 48px;
+        }
+    }
+}

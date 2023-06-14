@@ -1,0 +1,148 @@
+<div class="flex flex-col max-w-320 md:min-w-160 max-h-screen">
+
+    <!-- Header -->
+    <div class="flex flex-0 items-center justify-between h-16 pr-3 sm:pr-5 pl-6 sm:pl-8 bg-primary text-on-primary">
+        <div class="text-lg font-medium">Edition Utilisateur</div>
+        <button
+            mat-icon-button
+            (click)="close()"
+            [tabIndex]="-1">
+            <mat-icon
+                class="text-current"
+                [svgIcon]="'heroicons_outline:x'"></mat-icon>
+        </button>
+    </div>
+  
+    <!-- Compose form -->
+    <form
+        class="flex flex-col flex-auto p-6 sm:p-8 overflow-y-auto"
+        [formGroup]="utilisateurForm">
+
+        <!-- <mat-form-field class="fuse-mat-dense flex-auto">
+            <mat-label>Type de bénéficiaire</mat-label>
+            <mat-select placeholder="Selectionner le type de bénéficiaire" [compareWith]="comparer"
+            [formControl]="typeBeneficiaire">
+                <mat-option *ngFor="let type of listeTypeBeneficiaire" [value]="type">{{type.libelle}}</mat-option>
+            </mat-select>
+            <mat-error>Ce champ est obligatoire</mat-error> 
+        </mat-form-field> -->
+
+        <mat-form-field class="fuse-mat-dense flex-auto">
+            <mat-label>Selectionnez le profil</mat-label>
+            <mat-select placeholder="Selectionner les profils" [compareWith]="comparer"
+            [formControl]="profils">
+                <mat-option *ngFor="let profil of listeProfil" [value]="profil">{{profil.libelle}}</mat-option>
+            </mat-select>
+            <mat-error>Ce champ est obligatoire</mat-error> 
+        </mat-form-field>
+  
+        <!-- group -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between sm:gap-4 mt-4 sm:mt-2">
+            <mat-form-field class="fuse-mat-dense flex-auto">
+                <mat-label>Nom</mat-label>
+                <input matInput formControlName="nom" required />
+                <!-- <mat-icon matSuffix class="secondary-text">wrap_text</mat-icon> -->
+                <mat-error>Ce champ est obligatoire</mat-error>
+            </mat-form-field>
+
+            <mat-form-field class="fuse-mat-dense flex-auto">
+                <mat-label>Prénoms</mat-label>
+                <input matInput formControlName="prenom" required />
+                <!-- <mat-icon matSuffix class="secondary-text">wrap_text</mat-icon> -->
+                <mat-error>Ce champ est obligatoire</mat-error>
+            </mat-form-field>
+        </div>
+  
+        <!-- group -->
+        <div class="flex flex-col items-center justify-between w-full mt-4 sm:mt-2">
+            <mat-form-field class="fuse-mat-dense flex-auto w-full">
+                <mat-label>Pseudo</mat-label>
+                <input matInput formControlName="pseudo" required />
+                <!-- <mat-icon matSuffix class="secondary-text" >wrap_text</mat-icon> -->
+                <mat-error>Ce champ est obligatoire</mat-error>
+            </mat-form-field>
+
+            <mat-form-field class="fuse-mat-dense flex-auto w-full">
+                <mat-label>Mot de passe</mat-label>
+                <input matInput formControlName="motDePasse" type="password" required #passwordField />
+                <!-- <mat-icon matSuffix type="password" class="secondary-text">insert_link</mat-icon> -->
+                <button
+                    mat-icon-button
+                    type="button"
+                    (click)="
+                        passwordField.type === 'password'
+                            ? (passwordField.type = 'text')
+                            : (passwordField.type = 'password')
+                    "
+                    matSuffix
+                >
+                    <mat-icon
+                        class="icon-size-5"
+                        *ngIf="passwordField.type === 'password'"
+                        [svgIcon]="'heroicons_solid:eye'"
+                    ></mat-icon>
+                    <mat-icon
+                        class="icon-size-5"
+                        *ngIf="passwordField.type === 'text'"
+                        [svgIcon]="'heroicons_solid:eye-off'"
+                    ></mat-icon>
+                </button>
+                <mat-error>Ce champ est obligatoire</mat-error>
+                <mat-error *ngIf="utilisateurForm.get('motDePasse').hasError('minlength')">
+                    Le mot de passe doit avoir au moins six (8) caractères
+                </mat-error>
+                <mat-error *ngIf="utilisateurForm.get('motDePasse').hasError('pattern')">
+                    Le mot de passe doit avoir au moins : 1 caractère majuscule, 1 caractère miniscule, 1 nombre et 1 caractère spécial
+                </mat-error>
+            </mat-form-field>
+        </div>
+  
+        <!-- group -->
+        <div class="w-full flex flex-col items-center justify-between mt-4 sm:mt-2">
+            <mat-form-field class="fuse-mat-dense flex-auto w-full">
+                <mat-label>Email</mat-label>
+                <input matInput formControlName="email" required />
+                <mat-icon matSuffix class="secondary-text">email</mat-icon>
+                <mat-error>Ce champ est obligatoire</mat-error>
+                <mat-error *ngIf="utilisateurForm.get('email').hasError('email') || utilisateurForm.get('email').hasError('pattern')">
+                    Veuillez entrer un email valide
+                </mat-error>
+            </mat-form-field>
+
+            <mat-form-field class="fuse-mat-dense flex-auto w-full">
+                <mat-label>Contact</mat-label>
+                <input matInput formControlName="contact" required />
+                <mat-icon matSuffix class="secondary-text">contact_phone</mat-icon>
+                <mat-error>Ce champ est obligatoire</mat-error>
+                <mat-error *ngIf="utilisateurForm.get('contact').hasError('minlength')">
+                    Le contact doit avoir au moins huit (8) caractères
+                </mat-error>
+                <mat-error *ngIf="utilisateurForm.get('contact').hasError('maxlength')">
+                    Le contact doit avoir au maximum dix (10) caractères
+                </mat-error>
+                <mat-error *ngIf="utilisateurForm.get('contact').hasError('pattern')">
+                    Le ne doit contenir que des chiffres
+                </mat-error>
+            </mat-form-field>
+        </div>
+  
+        <!-- Actions -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between mt-4 sm:mt-6">
+            <div class="-ml-2">
+                <!-- Attach file -->
+            </div>
+  
+            <div class="flex items-center mt-4 sm:mt-0">
+                
+                <button
+                    class="order-first sm:order-last"
+                    mat-flat-button
+                    [color]="'primary'"
+                    [disabled]="utilisateurForm.invalid || profils.invalid" (click)="save()">
+                        {{data.utilisateur ? "Modifier" : "Ajouter"}}
+                    </button>
+            </div>
+        </div>
+    </form>
+</div>
+  

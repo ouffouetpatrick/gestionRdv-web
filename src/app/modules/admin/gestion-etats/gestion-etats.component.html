@@ -1,0 +1,593 @@
+<div
+    class="inventaire sm:absolute sm:inset-0 flex flex-col flex-auto min-w-0 sm:overflow-hidden bg-card dark:bg-transparent">
+    <!-- Header -->
+    <div
+        class="relative flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between py-4 px-6 md:px-8 border-b">
+        <!-- Loader -->
+        <div class="absolute inset-x-0 bottom-0" *ngIf="isLoading">
+            <mat-progress-bar [mode]="'indeterminate'"></mat-progress-bar>
+        </div>
+        <!-- Title -->
+        <div class="text-4xl text-primary font-extrabold tracking-tight">Etats</div>
+        <!-- Actions -->
+    </div>
+
+    <div id="etat-tab">
+        <mat-tab-group mat-align-tabs="end" class="pt-4 w-full" (selectedTabChange)="onTabsChange($event)"
+            [animationDuration]="'0'">
+            <mat-tab label="Journalier">
+                <div class="border-t border-gray-200 pt-4 mt-4">
+
+                    <!-- filtre -->
+                    <div class="flex flex-col gap-0 items-start mb-2 pl-1 justify-between sm:flex-row sm:items-center sm:pl-1">
+                        <div [formGroup]="SearchJourform" class="flex gap-4 items-center">
+                            <mat-form-field appearance="fill" class="fuse-mat-dense">
+                                <mat-label>Choisir une date</mat-label>
+                                <input matInput [matDatepicker]="picker" [formControlName]="'dateJour'">
+                                <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                                <mat-datepicker #picker></mat-datepicker>
+                            </mat-form-field>
+                            <mat-form-field class="fuse-mat-dense flex-auto w-20 sm:w-30" appearance="fill">
+                                <mat-label>Statut</mat-label>
+                                <mat-select [formControlName]="'statutVisite'" [(ngModel)]="selectValue">
+                                    <mat-option *ngFor="let item of ListeStatutVisite"
+                                        [value]="item.id">{{item.libelle}}
+                                    </mat-option>
+                                </mat-select>
+                            </mat-form-field>
+                            <mat-form-field *ngIf="user.utilisateurProfil[0].profil?.id === 1" class="fuse-mat-dense flex-auto w-22 sm:w-40" appearance="fill">
+                                <mat-label>Employé</mat-label>
+                                <mat-select [formControlName]="'utilisateurs'" placeholder="Choisir un employé"
+                                    [(ngModel)]="selectValueEmploye">
+                                    <mat-option [value]="All">Tous</mat-option>
+                                    <mat-option *ngFor="let utilisateur of temp" [value]="utilisateur.id">
+                                        {{utilisateur.nom}} {{utilisateur.prenom}}
+                                    </mat-option>
+                                </mat-select>
+                            </mat-form-field>
+                        </div>
+                        <div class="flex">
+                            <button mat-flat-button [color]="'primary'" (click)="searchFilterJournalier()">
+                                <mat-icon [svgIcon]="'heroicons_outline:search'"></mat-icon>
+                                <span>Rechercher</span>
+                            </button>
+                            <button mat-icon-button [matMenuTriggerFor]="summaryMenu">
+                                <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:dots-vertical'"></mat-icon>
+                            </button>
+                            <mat-menu #summaryMenu="matMenu">
+                                <button mat-menu-item (click)="exportPdf()">PDF</button>
+                                <button mat-menu-item (click)="exportExcel()">Excel</button>
+                            </mat-menu>
+                        </div>
+                    </div>
+
+                    <!-- Main -->
+                    <div class="flex flex-auto overflow-hidden">
+                        <div class="flex flex-col flex-auto sm:mb-18 overflow-hidden sm:overflow-y-auto">
+                            <table mat-table [dataSource]="dataSourceDay" matSort class="w-full">
+                                <!-- Position Column -->
+                                <ng-container matColumnDef="dateRdv">
+                                    <th class="text-white" mat-header-cell *matHeaderCellDef mat-sort-header>Date du RDV
+                                    </th>
+                                    <td mat-cell *matCellDef="let element">{{element?.date | date:'dd/MM/yyyy'}}</td>
+                                </ng-container>
+
+                                <!-- Position Column -->
+                                <ng-container matColumnDef="heure">
+                                    <th class="hidden sm:table-cell text-white" mat-header-cell *matHeaderCellDef mat-sort-header>Heure</th>
+                                    <td class="hidden sm:table-cell" mat-cell *matCellDef="let element">{{element?.date | date:'HH:mm'}}</td>
+                                </ng-container>
+
+                                <!-- Position Column -->
+                                <ng-container matColumnDef="objet">
+                                    <th class="text-white" mat-header-cell *matHeaderCellDef mat-sort-header>Objet</th>
+                                    <td mat-cell *matCellDef="let element">{{element?.objet}}</td>
+                                </ng-container>
+
+                                <ng-container matColumnDef="demandeur">
+                                    <th class="hidden md:table-cell text-white" mat-header-cell *matHeaderCellDef mat-sort-header>
+                                        Demandeur
+                                    </th>
+                                    <td class="hidden md:table-cell" mat-cell *matCellDef="let element">
+                                          {{ element?.utilisateur?.nom}} {{ element?.utilisateur?.prenom}}
+                                    </td>
+                                </ng-container>
+
+                                <ng-container matColumnDef="employe">
+                                    <th class="hidden md:table-cell text-white" mat-header-cell *matHeaderCellDef mat-sort-header>
+                                        Dirigeant
+                                    </th>
+                                    <td class="hidden md:table-cell" mat-cell *matCellDef="let element">{{element?.employe?.nom ?
+                                        element?.employe?.nom : "Pas encore attribuée"}}</td>
+                                </ng-container>
+
+                                <ng-container matColumnDef="motif">
+                                    <th class="hidden sm:table-cell text-white" mat-header-cell *matHeaderCellDef mat-sort-header> Motif
+                                    </th>
+                                    <td class="hidden sm:table-cell" mat-cell *matCellDef="let element">{{element?.motif?.libelle?
+                                        element?.motif?.libelle : "Aucun motif"}} </td>
+                                </ng-container>
+
+                                <ng-container matColumnDef="statut">
+                                    <th class="hidden sm:table-cell text-white" mat-header-cell *matHeaderCellDef mat-sort-header>Statut</th>
+                                    <td class="hidden sm:table-cell" mat-cell *matCellDef="let element">{{element?.statutVisite[0].statut?.libelle}}
+                                    </td>
+                                </ng-container>
+
+                                <!-- Weight Column -->
+                                <ng-container matColumnDef="datecreation">
+                                    <th class="text-white" mat-header-cell *matHeaderCellDef mat-sort-header>Date de
+                                        creation</th>
+                                    <td mat-cell *matCellDef="let element">{{element.statutVisite[0].dateCreation |
+                                        date:'dd/MM/yyyy'}}</td>
+                                </ng-container>
+
+                                <tr class="z-10 sticky top-0 gap-4 py-4 px-6 md:px-8 text-md font-semibold text-white bg-primary dark:bg-black dark:bg-opacity-5"
+                                    mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                                <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+                                <!-- Row shown when there is no matching data. -->
+                                <tr class="mat-row" *matNoDataRow>
+                                    <td class="mat-cell text-center" colspan="10">
+                                        Aucun élément
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </mat-tab>
+            <mat-tab label="Hebdomadaire">
+                <div class="border-t border-gray-200 pt-4 mt-4">
+
+                    <!-- filtre -->
+                    <div class="flex flex-col gap-0 items-start mb-1 pl-1 justify-between lg:flex-row lg:items-center lg:pl-1">
+                        <div [formGroup]="SearchSemaineform" class="flex flex-col gap-1 items-start justify-start sm:flex-row sm:items-center">
+                            <div class="flex gap-1">
+                                <mat-form-field class="fuse-mat-dense flex-auto w-18" appearance="fill">
+                                    <mat-label>Semaine</mat-label>
+                                    <mat-select [formControlName]="'semaine'"
+                                        (selectionChange)="getNewWeekDayInterval(2022, $event.value)">
+                                        <mat-option *ngFor="let semaine of ListeSemaineGeneral" [value]="semaine.IdSemaine">
+                                            {{semaine.NomSemaine}}
+                                        </mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+                                <mat-form-field class="fuse-mat-dense flex-auto w-22" appearance="fill">
+                                    <mat-label>Année</mat-label>
+                                    <mat-select [formControlName]="'annee'"
+                                        (selectionChange)="getNewWeekDayInterval($event.value, 6)">
+                                        <mat-option *ngFor="let annee of ListeAnneeGeneral" [value]="annee.id">
+                                            {{annee.name}}
+                                        </mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+                                <mat-form-field appearance="fill" class="fuse-mat-dense">
+                                    <mat-label>Date debut</mat-label>
+                                    <input 
+                                        matInput 
+                                        [matDatepicker]="picker" 
+                                        [formControlName]="'dateDebut'"
+                                        [disabled]="true">
+                                    <mat-datepicker-toggle matSuffix [for]="picker" [disabled]="true"></mat-datepicker-toggle>
+                                    <mat-datepicker #picker></mat-datepicker>
+                                </mat-form-field>
+                                <mat-form-field appearance="fill" class="fuse-mat-dense">
+                                    <mat-label>Date fin</mat-label>
+                                    <input 
+                                        matInput 
+                                        [matDatepicker]="picker1" 
+                                        [formControlName]="'dateFin'"
+                                        [disabled]="true">
+                                    <mat-datepicker-toggle matSuffix [for]="picker1" [disabled]="true"></mat-datepicker-toggle>
+                                    <mat-datepicker #picker1></mat-datepicker>
+                                </mat-form-field>
+                            </div>
+                            <div class="flex gap-1">
+                                <mat-form-field class="fuse-mat-dense flex-auto w-22 sm:w-30" appearance="fill">
+                                    <mat-label>Statut visite</mat-label>
+                                    <mat-select [formControlName]="'statutVisite'" [(ngModel)]="selectValue">
+                                        <mat-option *ngFor="let item of ListeStatutVisite"
+                                            [value]="item.id">{{item.libelle}}</mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+                                <mat-form-field *ngIf="user.utilisateurProfil[0].profil?.id === 1" class="fuse-mat-dense flex-auto w-22 sm:w-30" appearance="fill">
+                                    <mat-label>Employé</mat-label>
+                                    <mat-select [formControlName]="'utilisateurs'" placeholder="Choisir un employé"
+                                        [(ngModel)]="selectValueEmploye">
+                                        <mat-option *ngFor="let utilisateur of temp" [value]="utilisateur.id">
+                                            {{utilisateur.nom}} {{utilisateur.prenom}}
+                                        </mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+                            </div>
+                        </div>
+                        <div class="flex">
+                            <button mat-flat-button [color]="'primary'"
+                                (click)="searchFilterHebdomadaire()">
+                                <mat-icon [svgIcon]="'heroicons_outline:search'"></mat-icon>
+                                <span>Rechercher</span>
+                            </button>
+                            <button mat-icon-button [matMenuTriggerFor]="summaryMenu">
+                                <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:dots-vertical'"></mat-icon>
+                            </button>
+                            <mat-menu #summaryMenu="matMenu">
+                                <button mat-menu-item (click)="exportPdf()">PDF</button>
+                                <button mat-menu-item (click)="exportExcel()">Excel</button>
+                            </mat-menu>
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="flex flex-auto overflow-hidden">
+                        <div class="flex flex-col flex-auto sm:mb-18 overflow-hidden sm:overflow-y-auto">
+                            <table mat-table [dataSource]="dataSourceWeek" matSort class="w-full">
+                                <!-- Position Column -->
+                                <ng-container matColumnDef="dateRdv">
+                                    <th class="text-white" mat-header-cell *matHeaderCellDef mat-sort-header>Date du RDV
+                                    </th>
+                                    <td mat-cell *matCellDef="let element">{{element?.date | date:'dd/MM/yyyy'}}</td>
+                                </ng-container>
+
+                                <!-- Position Column -->
+                                <ng-container matColumnDef="heure">
+                                    <th class="hidden sm:table-cell text-white" mat-header-cell *matHeaderCellDef mat-sort-header>Heure</th>
+                                    <td class="hidden sm:table-cell" mat-cell *matCellDef="let element">{{element?.date | date:'HH:mm'}}</td>
+                                </ng-container>
+
+                                <!-- Position Column -->
+                                <ng-container matColumnDef="objet">
+                                    <th class="text-white" mat-header-cell *matHeaderCellDef mat-sort-header>Objet</th>
+                                    <td mat-cell *matCellDef="let element">{{element?.objet}}</td>
+                                </ng-container>
+
+                                <ng-container matColumnDef="demandeur">
+                                    <th class="hidden md:table-cell text-white" mat-header-cell *matHeaderCellDef mat-sort-header>
+                                        Demandeur
+                                    </th>
+                                    <td class="hidden md:table-cell" mat-cell *matCellDef="let element">
+                                          {{ element?.utilisateur?.nom}} {{ element?.utilisateur?.prenom}}
+                                    </td>
+                                </ng-container>
+
+                                <ng-container matColumnDef="employe">
+                                    <th class="hidden md:table-cell text-white" mat-header-cell *matHeaderCellDef mat-sort-header>
+                                        Dirigeant
+                                    </th>
+                                    <td class="hidden md:table-cell" mat-cell *matCellDef="let element">
+                                        {{element?.employe?.nom ? element?.employe?.nom : "Pas encore attribuée"}}
+                                    </td>
+                                </ng-container>
+
+                                <ng-container matColumnDef="motif">
+                                    <th class="hidden sm:table-cell text-white" mat-header-cell *matHeaderCellDef mat-sort-header> Motif
+                                    </th>
+                                    <td class="hidden sm:table-cell" mat-cell *matCellDef="let element">
+                                        {{element?.motif?.libelle? element?.motif?.libelle : "Aucun motif"}} 
+                                    </td>
+                                </ng-container>
+
+                                <ng-container matColumnDef="statut">
+                                    <th class="hidden sm:table-cell text-white" mat-header-cell *matHeaderCellDef mat-sort-header>Statut</th>
+                                    <td class="hidden sm:table-cell" mat-cell *matCellDef="let element">{{element?.statutVisite[0].statut?.libelle}}
+                                    </td>
+                                </ng-container>
+
+                                <!-- Weight Column -->
+                                <ng-container matColumnDef="datecreation">
+                                    <th class="text-white" mat-header-cell *matHeaderCellDef mat-sort-header>Date de
+                                        creation</th>
+                                    <td mat-cell *matCellDef="let element">{{element.statutVisite[0].dateCreation |
+                                        date:'dd/MM/yyyy'}}</td>
+                                </ng-container>
+
+                                <tr class="z-10 sticky top-0 gap-4 py-4 px-6 md:px-8 text-md font-semibold text-white bg-primary dark:bg-black dark:bg-opacity-5"
+                                    mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                                <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+                                <!-- Row shown when there is no matching data. -->
+                                <tr class="mat-row" *matNoDataRow>
+                                    <td class="mat-cell text-center" colspan="10">
+                                        Aucun élément
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </mat-tab>
+            <mat-tab label="Mensuel">
+                <div class="border-t border-gray-200 pt-4 mt-4">
+
+                    <!-- filtre -->
+                    <div class="flex flex-col gap-0 items-start mb-2 pl-1 justify-between sm:flex-row sm:items-center sm:pl-1">
+                        <div [formGroup]="SearchMoisform" class="flex gap-4 items-center">
+                            <mat-form-field class="fuse-mat-dense flex-auto w-20 sm:w-30" appearance="fill">
+                                <mat-label>Mois</mat-label>
+                                <mat-select [formControlName]="'mois'" name="food" placeholder="Choisir un mois">
+                                    <mat-option *ngFor="let moi of mois" [value]="moi.id">
+                                        {{moi.name}}
+                                    </mat-option>
+                                </mat-select>
+                            </mat-form-field>
+                            <mat-form-field class="fuse-mat-dense flex-auto w-22" appearance="fill">
+                                <mat-label>Année</mat-label>
+                                <mat-select [formControlName]="'annee'">
+                                    <mat-option *ngFor="let annee of annees" [value]="annee.id">
+                                        {{ annee.name }}
+                                    </mat-option>
+                                </mat-select>
+                            </mat-form-field>
+                            <mat-form-field class="fuse-mat-dense flex-auto w-20 sm:w-30" appearance="fill">
+                                <mat-label>Statut visite</mat-label>
+                                <mat-select [formControlName]="'statutVisite'" [(ngModel)]="selectValue">
+                                    <mat-option *ngFor="let item of ListeStatutVisite"
+                                        [value]="item.id">{{item.libelle}}</mat-option>
+                                </mat-select>
+                            </mat-form-field>
+                            <mat-form-field *ngIf="user.utilisateurProfil[0].profil?.id === 1" class="fuse-mat-dense flex-auto w-22 sm:w-30" appearance="fill">
+                                <mat-label>Employé</mat-label>
+                                <mat-select [formControlName]="'utilisateurs'" placeholder="Choisir un employé"
+                                    [(ngModel)]="selectValueEmploye">
+                                    <mat-option *ngFor="let utilisateur of temp" [value]="utilisateur.id">
+                                        {{utilisateur.nom}} {{utilisateur.prenom}}
+                                    </mat-option>
+                                </mat-select>
+                            </mat-form-field>
+                        </div>
+                        <div class="flex">
+                            <button mat-flat-button [color]="'primary'" [disabled]=""
+                                (click)="searchFilterMensuel()">
+                                <mat-icon [svgIcon]="'heroicons_outline:search'"></mat-icon>
+                                <span>Rechercher</span>
+                            </button>
+                            <button mat-icon-button [matMenuTriggerFor]="summaryMenu">
+                                <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:dots-vertical'"></mat-icon>
+                            </button>
+                            <mat-menu #summaryMenu="matMenu">
+                                <button mat-menu-item (click)="exportPdf()">PDF</button>
+                                <button mat-menu-item (click)="exportExcel()">Excel</button>
+                            </mat-menu>
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="flex flex-auto overflow-hidden">
+                        <div class="flex flex-col flex-auto sm:mb-18 overflow-hidden sm:overflow-y-auto">
+                            <table mat-table [dataSource]="dataSourceMonth" matSort class="w-full">
+                                <!-- Position Column -->
+                                <ng-container matColumnDef="dateRdv">
+                                    <th class="text-white" mat-header-cell *matHeaderCellDef mat-sort-header>Date du RDV
+                                    </th>
+                                    <td mat-cell *matCellDef="let element">{{element?.date | date:'dd/MM/yyyy'}}</td>
+                                </ng-container>
+
+                                <!-- Position Column -->
+                                <ng-container matColumnDef="heure">
+                                    <th class="hidden sm:table-cell text-white" mat-header-cell *matHeaderCellDef mat-sort-header>Heure</th>
+                                    <td class="hidden sm:table-cell" mat-cell *matCellDef="let element">{{element?.date | date:'HH:mm'}}</td>
+                                </ng-container>
+
+                                <ng-container matColumnDef="objet">
+                                    <th class="text-white" mat-header-cell *matHeaderCellDef mat-sort-header>Objet</th>
+                                    <td mat-cell *matCellDef="let element">{{element?.objet}}</td>
+                                </ng-container>
+
+                                <ng-container matColumnDef="demandeur">
+                                    <th class="hidden md:table-cell text-white" mat-header-cell *matHeaderCellDef mat-sort-header>
+                                        Demandeur
+                                    </th>
+                                    <td class="hidden md:table-cell" mat-cell *matCellDef="let element">
+                                          {{ element?.utilisateur?.nom}} {{ element?.utilisateur?.prenom}}
+                                    </td>
+                                </ng-container>
+
+                                <ng-container matColumnDef="employe">
+                                    <th class="hidden md:table-cell text-white" mat-header-cell *matHeaderCellDef mat-sort-header>
+                                        Dirigeant
+                                    </th>
+                                    <td class="hidden md:table-cell" mat-cell *matCellDef="let element">{{element?.employe?.nom ?
+                                        element?.employe?.nom : "Pas encore attribuée"}}</td>
+                                </ng-container>
+
+                                <ng-container matColumnDef="motif">
+                                    <th class="hidden sm:table-cell text-white" mat-header-cell *matHeaderCellDef mat-sort-header> Motif
+                                    </th>
+                                    <td class="hidden sm:table-cell" mat-cell *matCellDef="let element">{{element?.motif?.libelle?
+                                        element?.motif?.libelle : "Aucun motif"}} </td>
+                                </ng-container>
+
+                                <ng-container matColumnDef="statut">
+                                    <th class="hidden sm:table-cell text-white" mat-header-cell *matHeaderCellDef mat-sort-header>Statut</th>
+                                    <td class="hidden sm:table-cell" mat-cell *matCellDef="let element">{{element?.statutVisite[0].statut?.libelle}}
+                                    </td>
+                                </ng-container>
+
+                                <!-- Weight Column -->
+                                <ng-container matColumnDef="datecreation">
+                                    <th class="text-white" mat-header-cell *matHeaderCellDef mat-sort-header>Date de
+                                        creation</th>
+                                    <td mat-cell *matCellDef="let element">{{element.statutVisite[0].dateCreation |
+                                        date:'dd/MM/yyyy'}}</td>
+                                </ng-container>
+
+                                <tr class="z-10 sticky top-0 gap-4 py-4 px-6 md:px-8 text-md font-semibold text-white bg-primary dark:bg-black dark:bg-opacity-5"
+                                    mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                                <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+                                <!-- Row shown when there is no matching data. -->
+                                <tr class="mat-row" *matNoDataRow>
+                                    <td class="mat-cell text-center" colspan="10">
+                                        Aucun élément
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </mat-tab>
+            <mat-tab label="Annuel">
+                <div class="border-t border-gray-200 pt-4 mt-4">
+
+                    <!-- filtre -->
+                    <div class="flex flex-col gap-0 items-start mb-2 pl-1 justify-between sm:flex-row sm:items-center sm:pl-1">
+                        <div [formGroup]="SearchAnneeform" class="flex gap-4 items-center">
+                            <mat-form-field class="fuse-mat-dense flex-auto w-22" appearance="fill">
+                                <mat-label>Année</mat-label>
+                                <mat-select [formControlName]="'annee'">
+                                    <mat-option *ngFor="let annee of annees" [value]="annee.id">
+                                        {{annee.name}}
+                                    </mat-option>
+                                </mat-select>
+                            </mat-form-field>
+                            <mat-form-field class="fuse-mat-dense flex-auto w-22 sm:w-30" appearance="fill">
+                                <mat-label>Statut visite</mat-label>
+                                <mat-select [formControlName]="'statutVisite'" [(ngModel)]="selectValue">
+                                    <mat-option *ngFor="let item of ListeStatutVisite"
+                                        [value]="item.id">{{item.libelle}}</mat-option>
+                                </mat-select>
+                            </mat-form-field>
+                            <mat-form-field *ngIf="user.utilisateurProfil[0].profil?.id === 1" class="fuse-mat-dense flex-auto w-22 sm:w-30" appearance="fill">
+                                <mat-label>Employé</mat-label>
+                                <mat-select [formControlName]="'utilisateurs'" placeholder="Choisir un employé"
+                                    [(ngModel)]="selectValueEmploye">
+                                    <mat-option *ngFor="let utilisateur of temp" [value]="utilisateur.id">
+                                        {{utilisateur.nom}} {{utilisateur.prenom}}
+                                    </mat-option>
+                                </mat-select>
+                            </mat-form-field>
+                        </div>
+                        <div>
+                            <button mat-flat-button [color]="'primary'" (click)="searchFilterAnnuel()">
+                                <mat-icon [svgIcon]="'heroicons_outline:search'"></mat-icon>
+                                <span>Rechercher</span>
+                            </button>
+                            <button mat-icon-button [matMenuTriggerFor]="summaryMenu">
+                                <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:dots-vertical'"></mat-icon>
+                            </button>
+                            <mat-menu #summaryMenu="matMenu">
+                                <button mat-menu-item (click)="exportPdf()">PDF</button>
+                                <button mat-menu-item (click)="exportExcel()">Excel</button>
+                            </mat-menu>
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="flex flex-auto overflow-hidden">
+                        <div class="flex flex-col flex-auto sm:mb-18 overflow-hidden sm:overflow-y-auto">
+                            <table mat-table [dataSource]="dataSourceYear" matSort class="w-full">
+                                <!-- Position Column -->
+                                <ng-container matColumnDef="dateRdv">
+                                    <th class="text-white" mat-header-cell *matHeaderCellDef mat-sort-header>Date du RDV
+                                    </th>
+                                    <td mat-cell *matCellDef="let element">{{element?.date | date:'dd/MM/yyyy'}}</td>
+                                </ng-container>
+
+                                <!-- Position Column -->
+                                <ng-container matColumnDef="heure">
+                                    <th class="hidden sm:table-cell text-white" mat-header-cell *matHeaderCellDef mat-sort-header>Heure</th>
+                                    <td class="hidden sm:table-cell" mat-cell *matCellDef="let element">{{element?.date | date:'HH:mm'}}</td>
+                                </ng-container>
+
+                                <!-- Position Column -->
+                                <ng-container matColumnDef="objet">
+                                    <th class="text-white" mat-header-cell *matHeaderCellDef mat-sort-header>Objet</th>
+                                    <td mat-cell *matCellDef="let element">{{element?.objet}}</td>
+                                </ng-container>
+
+                                <ng-container matColumnDef="demandeur">
+                                    <th class="hidden md:table-cell text-white" mat-header-cell *matHeaderCellDef mat-sort-header>
+                                        Demandeur
+                                    </th>
+                                    <td class="hidden md:table-cell" mat-cell *matCellDef="let element">
+                                          {{ element?.utilisateur?.nom}} {{ element?.utilisateur?.prenom}}
+                                    </td>
+                                </ng-container>
+
+                                <ng-container matColumnDef="employe">
+                                    <th class="hidden md:table-cell text-white" mat-header-cell *matHeaderCellDef mat-sort-header>
+                                        Dirigeant
+                                    </th>
+                                    <td class="hidden md:table-cell" mat-cell *matCellDef="let element">{{element?.employe?.nom ?
+                                        element?.employe?.nom : "Pas encore attribuée"}}
+                                    </td>
+                                </ng-container>
+
+                                <ng-container matColumnDef="motif">
+                                    <th class="hidden sm:table-cell text-white" mat-header-cell *matHeaderCellDef mat-sort-header> Motif
+                                    </th>
+                                    <td class="hidden sm:table-cell" mat-cell *matCellDef="let element">{{element?.motif?.libelle?
+                                        element?.motif?.libelle : "Aucun motif"}} </td>
+                                </ng-container>
+
+                                <ng-container matColumnDef="statut">
+                                    <th class="hidden sm:table-cell text-white" mat-header-cell *matHeaderCellDef mat-sort-header>Statut</th>
+                                    <td class="hidden sm:table-cell" mat-cell *matCellDef="let element">{{element?.statutVisite[0].statut?.libelle}}
+                                    </td>
+                                </ng-container>
+
+                                <!-- Weight Column -->
+                                <ng-container matColumnDef="datecreation">
+                                    <th class="text-white" mat-header-cell *matHeaderCellDef mat-sort-header>Date de
+                                        creation</th>
+                                    <td mat-cell *matCellDef="let element">{{element.statutVisite[0].dateCreation |
+                                        date:'dd/MM/yyyy'}}</td>
+                                </ng-container>
+
+                                <tr class="z-10 sticky top-0 gap-4 py-4 px-6 md:px-8 text-md font-semibold text-white bg-primary dark:bg-black dark:bg-opacity-5"
+                                    mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                                <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+                                <!-- Row shown when there is no matching data. -->
+                                <tr class="mat-row" *matNoDataRow>
+                                    <td class="mat-cell text-center" colspan="10">
+                                        Aucun élément
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </mat-tab>
+        </mat-tab-group>
+
+        <div *ngIf="showPagination == 0">
+            <mat-paginator
+                class="sm:absolute sm:inset-x-0 sm:bottom-0 border-b sm:border-t sm:border-b-0 z-10 bg-gray-50 dark:bg-transparent"
+                [ngClass]="{ 'pointer-events-none': isLoading }" #paginationDay [pageSize]="page.pageSize"
+                [pageSizeOptions]="page.pageSizeOptions" showFirstLastButtons
+                aria-label="Select page of periodic elements">
+            </mat-paginator>
+        </div>
+        <div *ngIf="showPagination == 1">
+            <mat-paginator
+                class="sm:absolute sm:inset-x-0 sm:bottom-0 border-b sm:border-t sm:border-b-0 z-10 bg-gray-50 dark:bg-transparent"
+                [ngClass]="{ 'pointer-events-none': isLoading }" #paginationWeek [pageSize]="page.pageSize"
+                [pageSizeOptions]="page.pageSizeOptions" showFirstLastButtons
+                aria-label="Select page of periodic elements">
+            </mat-paginator>
+        </div>
+        <div *ngIf="showPagination == 2">
+            <mat-paginator
+                class="sm:absolute sm:inset-x-0 sm:bottom-0 border-b sm:border-t sm:border-b-0 z-10 bg-gray-50 dark:bg-transparent"
+                [ngClass]="{ 'pointer-events-none': isLoading }" #paginationMonth [pageSize]="page.pageSize"
+                [pageSizeOptions]="page.pageSizeOptions" showFirstLastButtons
+                aria-label="Select page of periodic elements">
+            </mat-paginator>
+        </div>
+        <div *ngIf="showPagination == 3">
+            <mat-paginator
+                class="sm:absolute sm:inset-x-0 sm:bottom-0 border-b sm:border-t sm:border-b-0 z-10 bg-gray-50 dark:bg-transparent"
+                [ngClass]="{ 'pointer-events-none': isLoading }" #paginationYear [pageSize]="page.pageSize"
+                [pageSizeOptions]="page.pageSizeOptions" showFirstLastButtons
+                aria-label="Select page of periodic elements">
+            </mat-paginator>
+        </div>
+
+    </div>
+
+</div>

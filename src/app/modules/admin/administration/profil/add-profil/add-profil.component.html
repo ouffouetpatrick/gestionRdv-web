@@ -1,0 +1,118 @@
+<div id="about" class="sm:absolute sm:inset-0 flex flex-col flex-auto min-w-0 sm:overflow-auto bg-card dark:bg-transparent">
+
+    <!-- Header -->
+    <div class="relative flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between py-8 px-6 md:px-8 border-b">
+        <!-- Loader -->
+        <div
+            class="absolute inset-x-0 bottom-0"
+            *ngIf="isLoading">
+            <mat-progress-bar [mode]="'indeterminate'"></mat-progress-bar>
+        </div>
+        <!-- Title -->
+        <div class="text-4xl font-extrabold tracking-tight">
+            <button mat-icon-button class="mr-0 mr-sm-16" [routerLink]="'/administration/profil'">
+                <mat-icon [svgIcon]="'heroicons_outline:arrow-narrow-left'"></mat-icon>
+            </button>
+            Edition profil
+        </div>
+        <!-- Actions -->
+        <div class="flex shrink-0 items-center mt-6 sm:mt-0 sm:ml-4">
+            
+            <button
+                class="ml-4"
+                mat-flat-button
+                (click)="save()"
+                [color]="'primary'">
+                <mat-icon [svgIcon]="'heroicons_outline:pencil'"></mat-icon>
+                <span class="ml-2 mr-1">Modifier</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main -->
+    <div class="flex flex-col p-8 bg-gray-50 min-h-180">
+
+        <form name="form" [formGroup]="profilForm" class="flex flex-col mt-4">
+            
+            <div class="flex flex-row justify-between gap-4">
+                <mat-form-field class="fuse-mat-dense flex-auto">
+                    <mat-label>Libellé profil</mat-label>
+                    <input matInput formControlName="libelle" required>
+                    <mat-icon matSuffix class="secondary-text">wrap_text</mat-icon>
+                    <mat-error>Ce champ est obligatoire</mat-error>
+                </mat-form-field>
+                <mat-form-field class="fuse-mat-dense flex-auto">
+                    <mat-label>Selectionnez les modules</mat-label>
+                    <mat-select placeholder="Selectionner les modules" [formControl]="modules" [compareWith]="comparer" multiple required>
+                        <mat-select-trigger>
+                            {{(modules.value && modules.value[0]) ? modules.value[0].libelle : ''}}
+                            <span *ngIf="modules.value?.length > 1" class="example-additional-selection">
+                                (+{{modules.value.length - 1}} {{modules.value?.length === 2 ? 'autre' : 'autres'}})
+                            </span>
+                        </mat-select-trigger>
+                        <mat-option *ngFor="let module of listeModule" [value]="module">{{module.libelle}}
+                        </mat-option>
+                    </mat-select>
+                    <mat-error>Ce champ est obligatoire</mat-error>
+                </mat-form-field>
+            </div>
+
+        </form>
+
+        <!-- Products list -->
+        <div class="flex flex-col flex-auto sm:mb-18">
+            <ng-container *ngIf="modules.value.length > 0">
+                <ng-container *ngIf="modules.value.length > 0; else noProducts">
+                    <div class="grid">
+                        <!-- Header -->
+                        <div
+                            class="inventory-grid z-10 sticky top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-white bg-gray-500 dark:bg-black dark:bg-opacity-5"
+                            matSort
+                            matSortDisableClear>
+                            <!-- <div></div> -->
+                            <div
+                                class="hidden md:block"
+                                [mat-sort-header]="'libelle'">
+                                Modules
+                            </div>
+                            <div [mat-sort-header]="'dateCreation'">Fonctionnalités</div>
+                        </div>
+                        <!-- Rows -->
+                        <ng-container *ngIf="modules.value.length > 0">
+                            <ng-container *ngFor="let row of modules.value;">
+                                <div class="inventory-grid grid items-center bg-gray-100 gap-4 py-3 px-6 md:px-8 border-b">
+
+                                    <!-- SKU -->
+                                    <div class="min-w-10 md:block">
+                                        {{row.libelle}}
+                                    </div>
+
+                                    <!-- Name -->
+                                    <div class="min-w-10 hidden md:block">
+                                        <ul>
+                                            <li *ngFor="let moduleDroit of row.moduleDroit">
+                                              <mat-slide-toggle [(ngModel)]="moduleDroit.droit.isCheck"
+                                              [ngModelOptions]="{standalone: true}"
+                                              class="mr-8">{{moduleDroit.droit.libelle}}</mat-slide-toggle>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </ng-container>
+                        </ng-container>
+                    </div>
+
+                </ng-container>
+            </ng-container>
+
+            <!--  -->
+
+            <ng-template #noProducts>
+                <div class="p-8 sm:p-16 border-t text-4xl font-semibold tracking-tight text-center">Aucun module enregistré !</div>
+            </ng-template>
+
+        </div>
+
+    </div>
+
+</div>

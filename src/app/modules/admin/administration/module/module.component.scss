@@ -1,0 +1,19 @@
+
+app-module{
+
+    .inventory-grid {
+        grid-template-columns: auto 48px 40px;
+
+        @screen sm {
+            grid-template-columns: 55px auto 40px 55px 48px;
+        }
+
+        @screen md {
+            grid-template-columns: 220px auto 48px 249px 48px;
+        }
+
+        @screen lg {
+            grid-template-columns: 220px auto 48px 249px 48px;
+        }
+    }
+}

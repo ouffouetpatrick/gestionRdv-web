@@ -1,0 +1,94 @@
+<div class="flex flex-col max-w-240 md:min-w-160 max-h-screen -m-6">
+
+  <!-- Header -->
+  <div class="flex flex-0 items-center justify-between h-16 pr-3 sm:pr-5 pl-6 sm:pl-8 bg-primary text-on-primary">
+      <div class="text-lg font-medium">Edition module</div>
+      <button
+          mat-icon-button
+          (click)="close()"
+          [tabIndex]="-1">
+          <mat-icon
+              class="text-current"
+              [svgIcon]="'heroicons_outline:x'"></mat-icon>
+      </button>
+  </div>
+
+  <!-- Compose form -->
+  <form
+      class="flex flex-col flex-auto p-6 sm:p-8 overflow-y-auto"
+      [formGroup]="moduleForm">
+
+      <!-- group -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between sm:gap-4 mt-4 sm:mt-2">
+          <mat-form-field class="fuse-mat-dense flex-auto">
+              <mat-label>Module parent</mat-label>
+              <mat-select [compareWith]="comparer" [formControlName]="'moduleParent'" [placeholder]="'administrateur'">
+                  <mat-option [value]="null">
+                    Aucun
+                  </mat-option>
+                  <mat-option *ngFor="let module of listeModuleParent" [value]="module">
+                    {{module.libelle}}
+                  </mat-option>
+              </mat-select>
+              <mat-error>Ce champ est obligatoire</mat-error>               
+          </mat-form-field>
+
+          <!-- Subject -->
+          <mat-form-field class="fuse-mat-dense flex-auto">
+              <mat-label>Libellé module</mat-label>
+              <input matInput [formControlName]="'libelle'" [placeholder]="'ecriture'" required>
+              <mat-icon class="text-current" [svgIcon]="'heroicons_outline:document-text'"></mat-icon>
+              <mat-error>Ce champ est obligatoire</mat-error>   
+          </mat-form-field>
+      </div>
+
+      <!-- group -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between sm:gap-4 mt-4 sm:mt-2">
+        <mat-form-field class="fuse-mat-dense flex-auto">
+            <mat-label>Icône</mat-label>
+            <input matInput [formControlName]="'icone'" placeholder="home">
+            <mat-icon matSuffix class="secondary-text">image</mat-icon>
+            <mat-error>Ce champ est obligatoire</mat-error>               
+        </mat-form-field>
+
+        <mat-form-field class="fuse-mat-dense flex-auto">
+            <mat-label>Lien</mat-label>
+            <input matInput [formControlName]="'lien'" [placeholder]="'/ecriture/accueil'">
+            <mat-icon matSuffix class="secondary-text">insert_link</mat-icon>
+            <mat-error>Ce champ est obligatoire</mat-error>
+        </mat-form-field>
+      </div>
+
+      <mat-form-field>
+          <mat-label>Selectionnez les droits</mat-label>
+          <mat-select [placeholder]="'Selectionner les droits'" [compareWith]="comparer"
+          [formControl]="droits" multiple>
+          <mat-select-trigger>
+              {{(droits.value && droits.value[0]) ? droits.value[0].libelle : ''}}
+              <span *ngIf="droits.value?.length > 1" class="example-additional-selection">
+                (+{{droits.value.length - 1}} {{droits.value?.length === 2 ? 'autre' : 'autres'}})
+              </span>
+            </mat-select-trigger>
+              <mat-option *ngFor="let droit of listeDroit" [value]="droit">{{droit.libelle}}</mat-option>
+          </mat-select>
+          <mat-error>Ce champ est obligatoire</mat-error> 
+      </mat-form-field>
+
+      <!-- Actions -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between mt-4 sm:mt-6">
+          <div class="-ml-2">
+              <!-- Attach file -->
+          </div>
+
+          <div class="flex items-center mt-4 sm:mt-0">
+              
+              <button
+                  class="order-first sm:order-last"
+                  mat-flat-button
+                  [color]="'primary'" [disabled]="moduleForm.invalid" (click)="save()">
+                    {{data.module ? "Modifier" : "Ajouter"}}
+                  </button>
+          </div>
+      </div>
+  </form>
+</div>
